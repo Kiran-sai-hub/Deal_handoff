@@ -1,44 +1,23 @@
+"""
+Bootstrap configuration — only what's needed before the SQLite DB is available.
+
+All runtime config (API keys, tokens, tool selections) is stored in the
+app_config table and accessed via database.get_setting() / set_setting().
+"""
+import os
 from pydantic_settings import BaseSettings
-from typing import Optional
 
-class Settings(BaseSettings):
-    # AI
-    gemini_api_key: str
 
-    # CRM
-    crm_type: str = "webhook"
-    hubspot_webhook_secret: Optional[str] = None
-    pipedrive_webhook_token: Optional[str] = None
-    zoho_webhook_token: Optional[str] = None
+class BootstrapSettings(BaseSettings):
+    """Loaded from environment / .env at startup."""
+    sqlite_db_path: str = "data/deals.db"
+    app_base_url: str = "http://localhost:8000"
 
-    # PM
-    pm_tool: str = "notion"
-    notion_token: Optional[str] = None
-    notion_database_id: Optional[str] = None
-    clickup_api_token: Optional[str] = None
-    clickup_list_id: Optional[str] = None
-    asana_access_token: Optional[str] = None
-    asana_project_id: Optional[str] = None
+    model_config = {"env_file": ".env", "extra": "ignore"}
 
-    # Billing
-    billing_tool: str = "none"
-    quickbooks_client_id: Optional[str] = None
-    quickbooks_client_secret: Optional[str] = None
-    quickbooks_refresh_token: Optional[str] = None
-    quickbooks_company_id: Optional[str] = None
-    xero_client_id: Optional[str] = None
-    xero_client_secret: Optional[str] = None
-    xero_refresh_token: Optional[str] = None
-    xero_tenant_id: Optional[str] = None
 
-    # Comms
-    slack_bot_token: str
-    slack_channel: str = "new-clients"
-    gmail_client_id: Optional[str] = None
-    gmail_client_secret: Optional[str] = None
-    gmail_refresh_token: Optional[str] = None
+bootstrap = BootstrapSettings()
 
-    class Config:
-        env_file = ".env"
-
-settings = Settings()
+# Sync helper so non-async code (connectors) can read the DB path
+SQLITE_DB_PATH: str = os.environ.get("SQLITE_DB_PATH", bootstrap.sqlite_db_path)
+APP_BASE_URL: str = os.environ.get("APP_BASE_URL", bootstrap.app_base_url)

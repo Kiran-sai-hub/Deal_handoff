@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  agent:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data          # SQLite database persists here
+    environment:
+      - SQLITE_DB_PATH=/app/data/deals.db
+      - APP_BASE_URL=http://localhost:8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/setup/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
